@@ -1,0 +1,6 @@
+iteration: 0, time: 0.16, train log-likelihood: -1.9882
+iteration: 0, time: 0.06, train log-likelihood: -1.9882
+iteration: 9, time: 0.03, train log-likelihood: -1.7637
+
+Seed: 0
+CPU: i386

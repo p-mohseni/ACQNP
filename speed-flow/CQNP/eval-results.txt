@@ -1,0 +1,4 @@
+context ll: -1.7181007862091064, target ll: -1.7228126525878906
+
+Model seed: 0, Eval seed: 43
+CPU: i386
