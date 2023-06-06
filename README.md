@@ -1,4 +1,4 @@
-Beta-Bernoulli Graph DropConnect (BB-GDC)
+Adaptive Conditional Quantile Neural Processes
 ============
 
 This is a PyTorch implementation of the A/CQNP and competitor baselines as described in our paper [Adaptive Conditional Quantile Neural Processes](https://arxiv.org/abs/2305.18777) appeared in 39-th Conference on Uncertainty in Artificial Intelligence (UAI 2023).
