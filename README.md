@@ -9,7 +9,7 @@ Neural processes are a family of probabilistic models that inherit the flexibili
 
 ## Cite
 
-If you find this useful in your research, please consider citing our paper:
+If you find this work useful in your research, please consider citing our paper:
 
 ```
 @misc{mohseni2023adaptive,
