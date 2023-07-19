@@ -151,10 +151,10 @@ class MultiheadAttention(nn.Module):
                           kernel_size=1,
                           bias=False)
                 )
-        self._query_layers = nn.ModuleList[query_layers]
-        self._key_layers = nn.ModuleList[key_layers]
-        self._value_layers = nn.ModuleList[value_layers]
-        self._output_layers = nn.ModuleList[output_layers]
+        self._query_layers = nn.ModuleList(query_layers)
+        self._key_layers = nn.ModuleList(key_layers)
+        self._value_layers = nn.ModuleList(value_layers)
+        self._output_layers = nn.ModuleList(output_layers)
 
         self._dot_product_attention = DotProductAttention(normalize=True)
 
