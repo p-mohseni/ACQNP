@@ -120,36 +120,54 @@ class MultiheadAttention(nn.Module):
 
         head_size = value_feat_size // num_heads
 
-        self._query_layer = nn.Conv1d(in_channels=query_feat_size,
-                                      out_channels=head_size,
-                                      kernel_size=1,
-                                      bias=False)
-        self._key_layer = nn.Conv1d(in_channels=key_feat_size,
-                                    out_channels=head_size,
-                                    kernel_size=1,
-                                    bias=False)
-        self._value_layer = nn.Conv1d(in_channels=value_feat_size,
-                                      out_channels=head_size,
-                                      kernel_size=1,
-                                      bias=False)
+        query_layers = []
+        key_layers = []
+        value_layers = []
+        output_layers = []
+
+        for i in range(self._num_heads):
+            query_layers.append(
+                nn.Conv1d(in_channels=query_feat_size,
+                          out_channels=head_size,
+                          kernel_size=1,
+                          bias=False)
+                )
+            key_layers.append(
+                nn.Conv1d(in_channels=key_feat_size,
+                          out_channels=head_size,
+                          kernel_size=1,
+                          bias=False)
+                )
+            value_layers.append(
+                nn.Conv1d(in_channels=value_feat_size,
+                          out_channels=head_size,
+                          kernel_size=1,
+                          bias=False)
+                )
+
+            output_layers.append(
+                nn.Conv1d(in_channels=head_size,
+                          out_channels=ouput_size,
+                          kernel_size=1,
+                          bias=False)
+                )
+        self._query_layers = nn.ModuleList[query_layers]
+        self._key_layers = nn.ModuleList[key_layers]
+        self._value_layers = nn.ModuleList[value_layers]
+        self._output_layers = nn.ModuleList[output_layers]
 
         self._dot_product_attention = DotProductAttention(normalize=True)
-
-        self._output_layer = nn.Conv1d(in_channels=head_size,
-                                       out_channels=ouput_size,
-                                       kernel_size=1,
-                                       bias=False)
 
     def forward(self, q, k, v):
         rep = 0.0
         for h in range(self._num_heads):
-            query_h = self._query_layer(q.permute([0, 2, 1]))
-            key_h = self._key_layer(k.permute([0, 2, 1]))
-            value_h = self._value_layer(v.permute([0, 2, 1]))
+            query_h = self._query_layers[h](q.permute([0, 2, 1]))
+            key_h = self._key_layers[h](k.permute([0, 2, 1]))
+            value_h = self._value_layers[h](v.permute([0, 2, 1]))
             out = self._dot_product_attention(query_h.permute([0, 2, 1]),
                                               key_h.permute([0, 2, 1]),
                                               value_h.permute([0, 2, 1]))
-            rep += self._output_layer(out.permute([0, 2, 1])).permute([0, 2, 1])
+            rep += self._output_layers[h](out.permute([0, 2, 1])).permute([0, 2, 1])
         return rep
 
 
