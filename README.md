@@ -9,9 +9,9 @@ Neural processes are a family of probabilistic models that inherit the flexibili
 ## Requirements
 We have tested our implementation on Python 3 with the following packages:
 
-PyTorch==1.9.0  
-torchvision==0.10.0  
-CUDA==11.1.1
+PyTorch = 1.9.0  
+torchvision = 0.10.0  
+CUDA = 11.1.1
 
 ## Cite
 
