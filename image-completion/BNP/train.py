@@ -7,6 +7,7 @@ import platform
 import numpy as np
 
 import torch
+import torchvision
 import torch.nn as nn
 import torch.optim as optim
 
@@ -22,25 +23,19 @@ from BNP.bnp import BNP
 parser = argparse.ArgumentParser()
 
 parser.add_argument('--train_seed', type=int, default=0)
-
-parser.add_argument('--train_batch_size', type=int, default=128)
-parser.add_argument('--max_num_points', type=int, default=100)
-parser.add_argument('--kernel', type=str, default='doule-sine',
-                    choices=['doule-sine', 'circle', 'lissajous', 'sawtooth', 'rbf', 'matern52'])
-
+parser.add_argument('--batch_size', type=int, default=16)
 parser.add_argument('--lr', type=float, default=5e-4)
-parser.add_argument('--l2_penalty', type=float, default=0)
+parser.add_argument('--l2_penalty', type=float, default=1e-5)
 parser.add_argument('--num_samples', type=int, default=4)
-parser.add_argument('--num_iterations', type=int, default=int(1e5))
+parser.add_argument('--num_epochs', type=int, default=100)
 parser.add_argument('--save_freq', type=int, default=int(5e3))
 
-parser.add_argument('--input_dim', type=int, default=1)
-parser.add_argument('--output_dim', type=int, default=1)
+parser.add_argument('--input_dim', type=int, default=2)
+parser.add_argument('--output_dim', type=int, default=3)
 parser.add_argument('--hidden_dim', type=int, default=128)
-parser.add_argument('--rep_dim', type=int, default=128)
 parser.add_argument('--encoder_pre_depth', type=int, default=5)
 parser.add_argument('--encoder_post_depth', type=int, default=3)
-parser.add_argument('--decoder_depth', type=int, default=4)
+parser.add_argument('--decoder_depth', type=int, default=5)
 
 args = parser.parse_args()
 
@@ -55,20 +50,17 @@ if device == torch.device('cuda'):
 #######################################################################
 
 
-if args.kernel == 'doule-sine':
-    sampler = CurveSampler(DoubleSineKernel())
-elif args.kernel == 'circle':
-    sampler = CurveSampler(CircularKernel())
-elif args.kernel == 'lissajous':
-    sampler = CurveSampler(LissajousKernel())
-elif args.kernel == 'sawtooth':
-    sampler = CurveSampler(SawtoothKernel())
-elif args.kernel == 'rbf':
-    sampler = CurveSampler(RBFKernel())
-elif args.kernel == 'matern52':
-    sampler = CurveSampler(Matern52Kernel())
-else:
-    raise Exception("Kernel not found")
+transforms = torchvision.transforms.transforms.Compose([
+    torchvision.transforms.ToTensor(),
+])
+
+dataset = torchvision.datasets.SVHN('./../data',
+                                    split='train',
+                                    transform=transforms,
+                                    download=True)
+dataloader = torch.utils.data.DataLoader(dataset,
+                                         batch_size=args.batch_size,
+                                         shuffle=True)
 
 
 #######################################################################
@@ -92,30 +84,34 @@ scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
 #######################################################################
 
 
-#training
-for iteration in range(args.num_iterations):
-    t_start = time.time()
-    model.train()
-    optimizer.zero_grad()
-    batch = sampler.sample(
-            batch_size=args.train_batch_size,
-            max_num_points=args.max_num_points,
-            device=device)
-    outs = model(batch, num_samples=args.num_samples)
-    outs['loss'].backward()
-    optimizer.step()
-    scheduler.step()
-    t_end = time.time()
 
-    if iteration % args.save_freq == 0 or iteration == args.num_iterations-1:
-        model_path = os.path.join('train-results', 'seed-{}'.format(args.train_seed))
-        if not os.path.exists(model_path):
-            os.makedirs(model_path)
-        torch.save(model, os.path.join(model_path, model_type+'.pt'))
-        with open(os.path.join(model_path, 'train-loss.txt'), 'a') as f:
-            f.write('iteration: {}, time: {:.2f}, train log-likelihood: {:.4f}\n'.format(
-                iteration, t_end - t_start, -outs['loss'].item()))
-            # f.write('-'*50+'\n')
+#training
+model.train()
+with torch.enable_grad():
+    log_p_list = []
+
+    for epoch in range(args.num_epochs):
+        batch_log_p = []
+        t_start = time.time()
+        for _, (img, label) in enumerate(dataloader):
+            batch = img_to_task(img, device=device)
+            optimizer.zero_grad()
+            outs = model(batch, num_samples=args.num_samples)
+            outs['loss'].backward()
+            optimizer.step()
+            batch_log_p.append(-outs['loss'].item())
+
+        t_end = time.time()
+        log_p_list.append(sum(batch_log_p) / len(batch_log_p))
+
+        if epoch % args.save_freq == 0 or epoch == args.num_epochs-1:
+            model_path = os.path.join('train-results', 'seed-{}'.format(args.train_seed))
+            if not os.path.exists(model_path):
+                os.makedirs(model_path)
+            torch.save(model, os.path.join(model_path, model_type+'.pt'))
+            with open(os.path.join(model_path, 'train-loss.txt'), 'a') as f:
+                f.write('epoch: {}, time: {:.2f}, train log-likelihood: {:.4f}\n'.format(epoch, t_end - t_start, log_p_list[-1]))
+                # f.write('-'*50+'\n')
 
 
 with open(os.path.join(model_path, 'train-loss.txt'), 'a') as f:
