@@ -18,12 +18,12 @@ CUDA = 11.1.1
 If you find this work useful in your research, please consider citing our paper:
 
 ```
-@misc{mohseni2023adaptive,
-      title={Adaptive Conditional Quantile Neural Processes}, 
-      author={Peiman Mohseni and Nick Duffield and Bani Mallick and Arman Hasanzadeh},
-      year={2023},
-      eprint={2305.18777},
-      archivePrefix={arXiv},
-      primaryClass={cs.LG}
+@inproceedings{mohseni2023adaptive,
+  title={Adaptive conditional quantile neural processes},
+  author={Mohseni, Peiman and Duffield, Nick and Mallick, Bani and Hasanzadeh, Arman},
+  booktitle={Uncertainty in Artificial Intelligence},
+  pages={1445--1455},
+  year={2023},
+  organization={PMLR}
 }
 ```
